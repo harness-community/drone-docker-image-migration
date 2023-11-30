@@ -62,19 +62,20 @@ In your Harness CI pipeline, you can define the plugin as a step, like this:
 
 The plugin offers the following customization options:
 
-- **SOURCE_DOCKER_REGISTRY**: The path to your Maven project. You should replace ${POM_PATH} with the actual path to your Maven project.
+- **SOURCE_DOCKER_REGISTRY**: The source docker registry
 
-- **SOURCE_USERNAME**: The name of your Docker image. Replace ${DOCKER_IMAGE_NAME} with your desired image name.
+- **SOURCE_USERNAME**: Source docker registry username
 
-- **SOURCE_PAT**: Your docker username to log into docker hub registry.
+- **SOURCE_PAT**: Source docker registry PAT
 
-- **IMAGE_NAME**: Your docker PAT to authenticate the connection.
+- **IMAGE_NAME**: The image to be pulled and pushed
 
-- **DESTINATION_DOCKER_REGISTRY**: Your docker PAT to authenticate the connection.
-- **DESTINATION_USERNAME**: Your docker PAT to authenticate the connection.
+- **DESTINATION_DOCKER_REGISTRY**: The destination docker registry
 
-- **DESTINATION_PAT**: Your docker PAT to authenticate the connection.
+- **DESTINATION_USERNAME**: Destination docker registry username
 
-- **IMAGE_TAG**: Your docker PAT to authenticate the connection.
+- **DESTINATION_PAT**: Destination docker registry PAT
+
+- **IMAGE_TAG**: The image tag to be pulled
 
 These environment variables are crucial for configuring and customizing the behavior of the plugin when executed as a Docker container. They allow you to provide specific values and project information required for pulling and tagging your Docker image.
