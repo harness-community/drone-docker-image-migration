@@ -37,7 +37,7 @@ Integrating the drone-docker-image-migration plugin into your Harness CI pipelin
     -e PLUGIN_IMAGE_TAG=${IMAGE_TAG}
     -v $(pwd):$(pwd) \
     -w $(pwd) \
-    harnesscommunity/drone-docker-image-migration
+    harnesscommunitytest/drone-docker-image-migration
 
 In your Harness CI pipeline, you can define the plugin as a step, like this:
 
@@ -47,7 +47,7 @@ In your Harness CI pipeline, you can define the plugin as a step, like this:
         identifier:  drone-docker-image-migration
         spec:
             connectorRef:  docker-registry-connector
-            image:  harnesscommunity/drone-docker-image-migration
+            image:  harnesscommunitytest/drone-docker-image-migration
             settings:
                 SOURCE_DOCKER_REGISTRY: registry.hub.docker.com
                 SOURCE_USERNAME: <+variable.docker_username>
