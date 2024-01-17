@@ -1,81 +1,64 @@
-# Introducing the Drone Docker Image Migration Plugin
+# drone-docker-image-migration
 
-The Drone Docker Image Migration Plugin streamlines the transfer of Docker images between registries, enhancing your Continuous Integration (CI) and Continuous Deployment (CD) workflows. This plugin is designed to pull a Docker image from a source registry, tag it, and then push it to a destination registry. The entire process is validated and configured using environment variables.
+- [Synopsis](#Synopsis)
+- [Parameters](#Paramaters)
+- [Plugin Image](#Plugin-Image)
+- [Examples](#Examples)
 
-## Build the Docker Image
+## Synopsis
 
-Using the plugin is straightforward. You can run the script directly using the following command:
+This plugin is designed to migrate a Docker image from one registry to another.
 
-```sh
-PLUGIN_SOURCE_DOCKER_REGISTRY=SOURCE_DOCKER_REGISTRY \
-PLUGIN_DESTINATION_DOCKER_REGISTRY=DESTINATION_DOCKER_REGISTRY \
-PLUGIN_SOURCE_USERNAME=SOURCE_USERNAME \
-PLUGIN_SOURCE_PAT=SOURCE_PAT \
-PLUGIN_DESTINATION_USERNAME=DESTINATION_USERNAME \
-PLUGIN_DESTINATION_PAT=DESTINATION_PAT \
-PLUGIN_IMAGE_NAME=IMAGE_NAME \
-PLUGIN_IMAGE_TAG=IMAGE_TAG \
-sh docker_image_migration_plugin.sh
+To learn how to utilize Drone plugins in Harness CI, please consult the provided [documentation](https://developer.harness.io/docs/continuous-integration/use-ci/use-drone-plugins/run-a-drone-plugin-in-ci).
+
+## Parameters
+
+| Parameter                                                                                                                                 | Choices/<span style="color:blue;">Defaults</span>  | Comments                                                                 |
+| :---------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------- | :----------------------------------------------------------------------- |
+| source_docker_registry <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>      |                                                    | The source docker registry                                               |
+| source_username <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>             |                                                    | Username to login to the source registry                                 |
+| source_password <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>             |                                                    | PAT / access token to authenticate with the source registry              |
+| destination_docker_registry <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span> |                                                    | The destination docker registry                                          |
+| destination_username <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>        |                                                    | Username to login to the destination registry                            |
+| destination_password <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>        |                                                    | PAT / access token to authenticate with the destination registry         |
+| source_namespace <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>            |                                                    | Source namespace to pull the image from                                  |
+| destination_namespace <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>       |                                                    | Destination namespace to push the image to                               |
+| image_name <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>                  |                                                    | The docker image name to be migrated from source to destination registry |
+| image_tag <span style="font-size: 10px"><br/>`string`</span>                                                                              | Default: <span style="color:blue;">`latest`</span> | The docker image tag to be migrated from source to destination registry  |
+
+## Plugin Image
+
+The plugin `harnesscommunity/drone-docker-image-migration` is available for the following architectures:
+
+| OS            | Tag             |
+| ------------- | --------------- |
+| linux/amd64   | `linux-amd64`   |
+| linux/arm64   | `linux-arm64`   |
+| windows/amd64 | `windows-amd64` |
+
+## Examples
+
+```
+# Plugin YAML
+- step:
+    type: Plugin
+    name: Migration Plugin
+    identifier: Migration_Plugin
+    spec:
+        connectorRef: harness-connector
+        image: harnesscommunity/drone-docker-image-migration:linux-amd64
+        settings:
+                source_docker_registry: registry.hub.docker.com
+                source_username: <+variable.source_username>
+                source_password: <+secrets.getValue("source_pat")>
+                image_name: image_name
+                image_tag: latest
+                destination_docker_registry: registry.hub.docker.com
+                destination_username: <+variable.destnation_username>
+                destination_password: <+secrets.getValue("destination_pat")>
+                source_namespace: <+variable.source_namespace>
+                destination_namespace: <+variable.destination_namespace>
+
 ```
 
-Additionally, you can build the Docker image with these commands:
-
-    docker buildx build -t DOCKER_ORG/drone-docker-image-migration --platform linux/amd64 .
-
-### Usage in Harness CI
-
-Integrating the drone-docker-image-migration plugin into your Harness CI pipeline is seamless. You can use Docker to run the plugin with environment variables. Here's how:
-
-    docker run --rm \
-    -e PLUGIN_SOURCE_DOCKER_REGISTRY=${SOURCE_DOCKER_REGISTRY} \
-    -e PLUGIN_DESTINATION_DOCKER_REGISTRY=${DESTINATION_DOCKER_REGISTRY} \
-    -e PLUGIN_SOURCE_USERNAME=${SOURCE_USERNAME} \
-    -e PLUGIN_SOURCE_PAT=${SOURCE_PAT}
-    -e PLUGIN_DESTINATION_USERNAME=${DOCKER_PAT}
-    -e PLUGIN_DESTINATION_PAT=${DESTINATION_PAT}
-    -e PLUGIN_IMAGE_NAME=${IMAGE_NAME}
-    -e PLUGIN_IMAGE_TAG=${IMAGE_TAG}
-    -v $(pwd):$(pwd) \
-    -w $(pwd) \
-    harnesscommunitytest/drone-docker-image-migration
-
-In your Harness CI pipeline, you can define the plugin as a step, like this:
-
-    - step:
-        type:  Plugin
-        name:  drone-docker-image-migration
-        identifier:  drone-docker-image-migration
-        spec:
-            connectorRef:  docker-registry-connector
-            image:  harnesscommunitytest/drone-docker-image-migration
-            settings:
-                SOURCE_DOCKER_REGISTRY: registry.hub.docker.com
-                SOURCE_USERNAME: <+variable.docker_username>
-                SOURCE_PAT: <+secrets.getValue("source_pat")>
-                IMAGE_NAME: image_name
-                DESTINATION_DOCKER_REGISTRY: registry.hub.docker.com
-                DESTINATION_USERNAME: <+variable.docker_username>
-                DESTINATION_PAT: <+secrets.getValue("dest_pat")>
-                IMAGE_TAG: latest
-
-### Plugin Options
-
-The plugin offers the following customization options:
-
-- **SOURCE_DOCKER_REGISTRY**: The source docker registry
-
-- **SOURCE_USERNAME**: Source docker registry username
-
-- **SOURCE_PAT**: Source docker registry PAT
-
-- **IMAGE_NAME**: The image to be pulled and pushed
-
-- **DESTINATION_DOCKER_REGISTRY**: The destination docker registry
-
-- **DESTINATION_USERNAME**: Destination docker registry username
-
-- **DESTINATION_PAT**: Destination docker registry PAT
-
-- **IMAGE_TAG**: The image tag to be pulled
-
-These environment variables are crucial for configuring and customizing the behavior of the plugin when executed as a Docker container. They allow you to provide specific values and project information required for pulling and tagging your Docker image.
+> <span style="font-size: 14px; margin-left:5px; background-color: #d3d3d3; padding: 4px; border-radius: 4px;">ℹ️ If you notice any issues in this documentation, you can [edit this document](https://github.com/harness-community/drone-docker-image-migration/blob/main/README.md) to improve it.</span>
