@@ -49,15 +49,15 @@ The plugin `harnesscommunity/drone-docker-image-migration` is available for the 
         image: harnesscommunity/drone-docker-image-migration:linux-amd64
         settings:
                 source_docker_registry: registry.hub.docker.com
-                source_username: <+variable.docker_username>
-                source_password: <+secrets.getValue("helmpluginpat")>
-                image_name: maven-test
+                source_username: <+variable.source_username>
+                source_password: <+secrets.getValue("source_pat")>
+                image_name: image_name
                 image_tag: latest
                 destination_docker_registry: registry.hub.docker.com
-                destination_username: <+variable.docker_username>
-                destination_password: <+secrets.getValue("helmpluginpat")>
-                source_namespace: <+variable.docker_username>
-                destination_namespace: <+variable.docker_username>
+                destination_username: <+variable.destnation_username>
+                destination_password: <+secrets.getValue("destination_pat")>
+                source_namespace: <+variable.source_namespace>
+                destination_namespace: <+variable.destination_namespace>
 
 ```
 
