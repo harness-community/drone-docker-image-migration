@@ -26,13 +26,13 @@ func main() {
 		imageTag = "latest"
 	}
 
-	if sourceDockerRegistry == "" || sourceUsername == "" || sourcePassword == "" {
-		fmt.Println("Source docker registry, username and password are required")
+	if sourceDockerRegistry == "" || sourceUsername == "" || sourcePassword == "" || sourceNamespace == "" {
+		fmt.Println("Source docker registry, namespace, username and password are required")
 		os.Exit(1)
 	}
 
-	if destinationDockerRegistry == "" || destinationUsername == "" || destinationPassword == "" {
-		fmt.Println("Destination docker registry, username and password are required")
+	if destinationDockerRegistry == "" || destinationUsername == "" || destinationPassword == "" || destinationNamespace == "" {
+		fmt.Println("Destination docker registry, namespace, username and password are required")
 		os.Exit(1)
 	}
 
