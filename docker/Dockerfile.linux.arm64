@@ -2,9 +2,10 @@ FROM --platform=linux/arm64 alpine:latest
 
 WORKDIR /app
 
+# Install Skopeo
 RUN apk --no-cache add ca-certificates curl && \
-    apk add --no-cache docker
+    apk add --no-cache skopeo
 
 COPY drone-image-migrate /app/
 
-ENTRYPOINT [ "/app/drone-image-migrate" ]
+ENTRYPOINT ["/app/drone-image-migrate"]

@@ -7,14 +7,13 @@ import (
 )
 
 func main() {
-	//  Get plugin settings
-	sourceDockerRegistry := os.Getenv("PLUGIN_SOURCE_DOCKER_REGISTRY")
-	destinationDockerRegistry := os.Getenv("PLUGIN_DESTINATION_DOCKER_REGISTRY")
-
+	// Get environment variables
+	sourceRegistry := os.Getenv("PLUGIN_SOURCE_REGISTRY")
 	sourceUsername := os.Getenv("PLUGIN_SOURCE_USERNAME")
 	sourcePassword := os.Getenv("PLUGIN_SOURCE_PASSWORD")
 	sourceNamespace := os.Getenv("PLUGIN_SOURCE_NAMESPACE")
 
+	destinationRegistry := os.Getenv("PLUGIN_DESTINATION_REGISTRY")
 	destinationUsername := os.Getenv("PLUGIN_DESTINATION_USERNAME")
 	destinationPassword := os.Getenv("PLUGIN_DESTINATION_PASSWORD")
 	destinationNamespace := os.Getenv("PLUGIN_DESTINATION_NAMESPACE")
@@ -22,73 +21,31 @@ func main() {
 	imageName := os.Getenv("PLUGIN_IMAGE_NAME")
 	imageTag := os.Getenv("PLUGIN_IMAGE_TAG")
 
-	if imageTag == "" {
-		imageTag = "latest"
-	}
-
-	if sourceDockerRegistry == "" || sourceUsername == "" || sourcePassword == "" || sourceNamespace == "" {
-		fmt.Println("Source docker registry, namespace, username and password are required")
-		os.Exit(1)
-	}
-
-	if destinationDockerRegistry == "" || destinationUsername == "" || destinationPassword == "" || destinationNamespace == "" {
-		fmt.Println("Destination docker registry, namespace, username and password are required")
-		os.Exit(1)
-	}
-
-	loginToDockerRegistry(sourceDockerRegistry, sourceUsername, sourcePassword)
-
-	pullImage(sourceDockerRegistry, imageName, imageTag, sourceNamespace)
-
-	tagImage(sourceDockerRegistry, destinationDockerRegistry, imageName, imageTag, sourceNamespace, destinationNamespace)
-
-	loginToDockerRegistry(destinationDockerRegistry, destinationUsername, destinationPassword)
-
-	pushImage(destinationDockerRegistry, imageName, imageTag, destinationNamespace)
+	// Authenticate and transfer image
+	authenticateAndTransferImage(sourceRegistry, sourceUsername, sourcePassword, sourceNamespace, destinationRegistry, destinationUsername, destinationPassword, destinationNamespace, imageName, imageTag)
 }
 
-func loginToDockerRegistry(dockerRegistry string, username string, password string) {
-	cmd := exec.Command("docker", "login", dockerRegistry, "-u", username, "-p", password)
-	output, err := cmd.Output()
-
-	if err != nil {
-		fmt.Println("Error logging in to docker registry")
-		os.Exit(1)
+func authenticateAndTransferImage(sourceRegistry, sourceUsername, sourcePassword, sourceNamespace, destinationRegistry, destinationUsername, destinationPassword, destinationNamespace, imageName, imageTag string) {
+	if sourceUsername != "" && sourcePassword != "" {
+		execCommand("skopeo", "login", "--username", sourceUsername, "--password", sourcePassword, sourceRegistry)
 	}
 
-	fmt.Println(string(output))
-}
-
-func pullImage(dockerRegistry string, imageName string, imageTag string, namespace string) {
-	cmd := exec.Command("docker", "pull", dockerRegistry+"/"+namespace+"/"+imageName+":"+imageTag)
-	output, err := cmd.Output()
-
-	if err != nil {
-		fmt.Println("Error pulling image")
-		os.Exit(1)
+	if destinationUsername != "" && destinationPassword != "" {
+		execCommand("skopeo", "login", "--username", destinationUsername, "--password", destinationPassword, destinationRegistry)
 	}
 
-	fmt.Println(string(output))
+	sourceImage := fmt.Sprintf("docker://%s/%s/%s:%s", sourceRegistry, sourceNamespace, imageName, imageTag)
+	destinationImage := fmt.Sprintf("docker://%s/%s", destinationRegistry, destinationNamespace)
+
+	execCommand("skopeo", "copy", sourceImage, destinationImage)
 }
 
-func tagImage(sourceDockerRegistry string, destinationDockerRegistry string, imageName string, imageTag string, sourceNamespace string, destinationNamespace string) {
-	cmd := exec.Command("docker", "tag", sourceDockerRegistry+"/"+sourceNamespace+"/"+imageName+":"+imageTag, destinationDockerRegistry+"/"+destinationNamespace+"/"+imageName+":"+imageTag)
-	output, err := cmd.Output()
-
+func execCommand(name string, arg ...string) {
+	cmd := exec.Command(name, arg...)
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		fmt.Println("Error tagging image")
-		os.Exit(1)
-	}
-
-	fmt.Println(string(output))
-}
-
-func pushImage(dockerRegistry string, imageName string, imageTag string, namespace string) {
-	cmd := exec.Command("docker", "push", dockerRegistry+"/"+namespace+"/"+imageName+":"+imageTag)
-	output, err := cmd.Output()
-
-	if err != nil {
-		fmt.Println("Error pushing image")
+		fmt.Printf("Error executing %s: %s\n", name, err)
+		fmt.Println(string(output))
 		os.Exit(1)
 	}
 
