@@ -32,27 +32,27 @@ func main() {
 	secretAccessKey := os.Getenv("PLUGIN_AWS_SECRET_ACCESS_KEY")
 	region := os.Getenv("PLUGIN_AWS_REGION")
 
+	err := verifyEnvVars()
+	if err != nil {
+		fmt.Println("Error verifying environment variables: ", err)
+		os.Exit(1)
+	}
+
 	// Authenticate and transfer image
 	authenticateAndTransferImage(sourceRegistry, sourceUsername, sourcePassword, sourceNamespace, destinationRegistry, destinationUsername, destinationPassword, destinationNamespace, imageName, imageTag, accessKeyId, secretAccessKey, region)
 }
 
 func authenticateAndTransferImage(sourceRegistry, sourceUsername, sourcePassword, sourceNamespace, destinationRegistry, destinationUsername, destinationPassword, destinationNamespace, imageName, imageTag, accessKeyId, secretAccessKey, region string) {
 
-	if sourceUsername == "AWS" && sourcePassword == "" {
-		// Get token from AWS
-		var err error
-		sourcePassword, err = getToken(accessKeyId, secretAccessKey, region)
-		if err != nil {
-			fmt.Println("Error getting token:", err)
-			os.Exit(1)
-		}
-	}
-
 	if sourceUsername != "" && sourcePassword != "" {
 		execCommand("skopeo", "login", "--username", sourceUsername, "--password", sourcePassword, sourceRegistry)
 	}
 
 	if destinationUsername == "AWS" && destinationPassword == "" {
+		if accessKeyId == "" || secretAccessKey == "" || region == "" {
+			fmt.Println("Error: missing AWS credentials")
+			os.Exit(1)
+		}
 		// Get token from AWS
 		var err error
 		destinationPassword, err = getToken(accessKeyId, secretAccessKey, region)
@@ -123,4 +123,36 @@ func getToken(accessKeyId, secretAccessKey, region string) (string, error) {
 	}
 
 	return strings.Split(awsToken, ":")[1], nil
+}
+
+func verifyEnvVars() error {
+	// Get environment variables
+	sourceRegistry := os.Getenv("PLUGIN_SOURCE_REGISTRY")
+	sourceUsername := os.Getenv("PLUGIN_SOURCE_USERNAME")
+	sourcePassword := os.Getenv("PLUGIN_SOURCE_PASSWORD")
+	sourceNamespace := os.Getenv("PLUGIN_SOURCE_NAMESPACE")
+
+	destinationRegistry := os.Getenv("PLUGIN_DESTINATION_REGISTRY")
+	destinationUsername := os.Getenv("PLUGIN_DESTINATION_USERNAME")
+	destinationNamespace := os.Getenv("PLUGIN_DESTINATION_NAMESPACE")
+
+	imageName := os.Getenv("PLUGIN_IMAGE_NAME")
+	imageTag := os.Getenv("PLUGIN_IMAGE_TAG")
+
+	// verify source variables
+	if sourceRegistry == "" || sourceUsername == "" || sourcePassword == "" || sourceNamespace == "" {
+		return fmt.Errorf("missing source variables")
+	}
+
+	// verify image variables
+	if imageName == "" || imageTag == "" {
+		return fmt.Errorf("missing image variables")
+	}
+
+	// verify destination variables
+	if destinationRegistry == "" || destinationUsername == "" || destinationNamespace == "" {
+		return fmt.Errorf("missing destination variables")
+	}
+
+	return nil
 }
