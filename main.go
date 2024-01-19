@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"strings"
 
+	"drone/plugin/image-migration/env"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -32,7 +34,7 @@ func main() {
 	secretAccessKey := os.Getenv("PLUGIN_AWS_SECRET_ACCESS_KEY")
 	region := os.Getenv("PLUGIN_AWS_REGION")
 
-	err := verifyEnvVars()
+	err := env.VerifyEnvVars()
 	if err != nil {
 		fmt.Println("Error verifying environment variables: ", err)
 		os.Exit(1)
@@ -123,36 +125,4 @@ func getToken(accessKeyId, secretAccessKey, region string) (string, error) {
 	}
 
 	return strings.Split(awsToken, ":")[1], nil
-}
-
-func verifyEnvVars() error {
-	// Get environment variables
-	sourceRegistry := os.Getenv("PLUGIN_SOURCE_REGISTRY")
-	sourceUsername := os.Getenv("PLUGIN_SOURCE_USERNAME")
-	sourcePassword := os.Getenv("PLUGIN_SOURCE_PASSWORD")
-	sourceNamespace := os.Getenv("PLUGIN_SOURCE_NAMESPACE")
-
-	destinationRegistry := os.Getenv("PLUGIN_DESTINATION_REGISTRY")
-	destinationUsername := os.Getenv("PLUGIN_DESTINATION_USERNAME")
-	destinationNamespace := os.Getenv("PLUGIN_DESTINATION_NAMESPACE")
-
-	imageName := os.Getenv("PLUGIN_IMAGE_NAME")
-	imageTag := os.Getenv("PLUGIN_IMAGE_TAG")
-
-	// verify source variables
-	if sourceRegistry == "" || sourceUsername == "" || sourcePassword == "" || sourceNamespace == "" {
-		return fmt.Errorf("missing source variables")
-	}
-
-	// verify image variables
-	if imageName == "" || imageTag == "" {
-		return fmt.Errorf("missing image variables")
-	}
-
-	// verify destination variables
-	if destinationRegistry == "" || destinationUsername == "" || destinationNamespace == "" {
-		return fmt.Errorf("missing destination variables")
-	}
-
-	return nil
 }

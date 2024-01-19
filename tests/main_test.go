@@ -1,6 +1,7 @@
 package main
 
 import (
+	"drone/plugin/image-migration/env"
 	"os"
 	"testing"
 )
@@ -47,11 +48,15 @@ func TestMain_EnvVarsNotSet(t *testing.T) {
 		os.Setenv("PLUGIN_IMAGE_TAG", imageTag)
 	}()
 
-	err := verifyEnvVars()
+	err := env.VerifyEnvVars()
 	if err == nil {
 		t.Error("Expected error, but got nil")
 	}
 
+	expectedErrorMessage := "missing source variables"
+	if got := err.Error(); got != expectedErrorMessage {
+		t.Errorf("Expected error message %q, but got %q", expectedErrorMessage, got)
+	}
 }
 
 func TestMain_EnvVarsSet(t *testing.T) {
@@ -96,7 +101,7 @@ func TestMain_EnvVarsSet(t *testing.T) {
 		os.Setenv("PLUGIN_IMAGE_TAG", imageTag)
 	}()
 
-	err := verifyEnvVars()
+	err := env.VerifyEnvVars()
 	if err != nil {
 		t.Errorf("Expected nil, but got %v", err)
 	}
