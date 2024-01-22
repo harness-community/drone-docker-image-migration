@@ -6,4 +6,4 @@ ENV GODEBUG=netdns=go
 
 ADD release/linux/arm64/drone-migrate.exe C:/drone-migrate.exe
 
-CMD ["C:\\drone-migrate.exe"]
+ENTRYPOINT ["C:\\drone-migrate.exe"]
