@@ -1,10 +1,9 @@
-FROM alpine:3.6 as alpine
-RUN apk add -U --no-cache ca-certificates
+FROM alpine:latest
 
-FROM alpine:3.6
 ENV GODEBUG netdns=go
-
-COPY --from=alpine /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+# Install Skopeo
+RUN apk --no-cache add ca-certificates curl && \
+    apk add --no-cache skopeo
 
 RUN apk add --no-cache skopeo
 
