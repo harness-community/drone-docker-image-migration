@@ -4,6 +4,6 @@ USER ContainerAdministrator
 
 ENV GODEBUG=netdns=go
 
-ADD release/linux/arm64/drone-migrate.exe C:/drone-migrate.exe
+ADD release/windows/amd64/drone-migrate.exe C:/drone-migrate.exe
 
 ENTRYPOINT ["C:\\drone-migrate.exe"]
