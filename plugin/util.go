@@ -5,38 +5,34 @@
 package plugin
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ecr"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/ecr"
 	"github.com/sirupsen/logrus"
 )
 
 func getAWSPassword(accessKeyID, secretAccessKey, region string) (string, error) {
-
 	if accessKeyID == "" || secretAccessKey == "" || region == "" {
 		return "", fmt.Errorf("aws credentials not provided")
 	}
 
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(region),
-		Credentials: credentials.NewStaticCredentialsFromCreds(credentials.Value{
-			AccessKeyID:     accessKeyID,
-			SecretAccessKey: secretAccessKey,
-		}),
-	})
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithRegion(region),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKeyID, secretAccessKey, "")),
+	)
 	if err != nil {
-		return "", fmt.Errorf("failed to create aws session: %w", err)
+		return "", fmt.Errorf("failed to load aws config: %w", err)
 	}
 
-	svc := ecr.New(sess)
+	svc := ecr.NewFromConfig(cfg)
 
 	input := &ecr.GetAuthorizationTokenInput{}
-	result, err := svc.GetAuthorizationToken(input)
+	result, err := svc.GetAuthorizationToken(context.TODO(), input)
 	if err != nil {
 		fmt.Println("Error getting authorization token:", err)
 		return "", err
