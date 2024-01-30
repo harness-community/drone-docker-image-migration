@@ -14,18 +14,18 @@ To learn how to utilize Drone plugins in Harness CI, please consult the provided
 
 ## Parameters
 
-| Parameter                                                                                                                     | Choices/<span style="color:blue;">Defaults</span> | Comments                                                         |
+| Parameter                                                                                                                     | Choices/<span style="color:blue;">Defaults</span> | Comments                                                         |     |
 | :---------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------ | :--------------------------------------------------------------- | --- |
-| source <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>          |                                                   | The source image to be copied                                    |
-| username <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>        |                                                   | Username to login to the destination registry                    |
-| password <span style="font-size: 10px"><br/>`string`</span>                                                                   |                                                   | PAT / access token to authenticate with the destination registry |
-| destination <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>     |                                                   | The destination where image will be copied                       |
-| source_username <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span> |                                                   | Username to login to the source registry                         |
+| source <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>          |                                                   | The source image to be copied                                    |     |
+| username <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>        |                                                   | Username to login to the destination registry                    |     |
+| password <span style="font-size: 10px"><br/>`string`</span>                                                                   |                                                   | PAT / access token to authenticate with the destination registry |     |
+| destination <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>     |                                                   | The destination where image will be copied                       |     |
+| source_username <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span> |                                                   | Username to login to the source registry                         |     |
 | source_password <span style="font-size: 10px"><br/>`string`</span>                                                            |                                                   | PAT / access token to authenticate with the source registry      |     |
-| aws_access_key_id <span style="font-size: 10px"><br/>`string`</span>                                                          |                                                   | AWS access key ID for generating access token                    |
-| aws_secret_access_key <span style="font-size: 10px"><br/>`string`</span>                                                      |                                                   | AWS secret access key for generating access token                |
-| aws_region <span style="font-size: 10px"><br/>`string`</span>                                                                 |                                                   | AWS region containing the ECR registry                           |
-| overwrite <span style="font-size: 10px"><br/>`boolean`</span>                                                                 |                                                   | Overwrite the existing image at destination, if present          |
+| aws_access_key_id <span style="font-size: 10px"><br/>`string`</span>                                                          |                                                   | AWS access key ID for generating access token                    |     |
+| aws_secret_access_key <span style="font-size: 10px"><br/>`string`</span>                                                      |                                                   | AWS secret access key for generating access token                |     |
+| aws_region <span style="font-size: 10px"><br/>`string`</span>                                                                 |                                                   | AWS region containing the ECR registry                           |     |
+| overwrite <span style="font-size: 10px"><br/>`boolean`</span>                                                                 |                                                   | Overwrite the existing image at destination, if present          |     |
 
 ## Notes
 
@@ -40,6 +40,7 @@ The plugin `harnesscommunity/drone-docker-image-migration` is available for the 
 | latest      | `linux-amd64/arm64, windows` |
 | linux/amd64 | `linux-amd64`                |
 | linux/arm64 | `linux-arm64`                |
+| windows     | `windows-amd64`              |
 
 ## Examples
 
