@@ -6,15 +6,11 @@ package plugin
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
-	"os/exec"
-	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ecr"
+	"github.com/google/go-containerregistry/pkg/authn"
+	"github.com/google/go-containerregistry/pkg/crane"
+	"github.com/sirupsen/logrus"
 )
 
 // Args provides plugin execution arguments.
@@ -24,162 +20,104 @@ type Args struct {
 	// Level defines the plugin log level.
 	Level string `envconfig:"PLUGIN_LOG_LEVEL"`
 
-	SourceRegistry  string `envconfig:"PLUGIN_SOURCE_REGISTRY"`
-	SourceUsername  string `envconfig:"PLUGIN_SOURCE_USERNAME"`
-	SourcePassword  string `envconfig:"PLUGIN_SOURCE_PASSWORD"`
-	SourceNamespace string `envconfig:"PLUGIN_SOURCE_NAMESPACE"`
+	Username    string `envconfig:"PLUGIN_USERNAME"`
+	Password    string `envconfig:"PLUGIN_PASSWORD"`
+	Source      string `envconfig:"PLUGIN_SOURCE"`
+	Destination string `envconfig:"PLUGIN_DESTINATION"`
 
-	DestinationRegistry  string `envconfig:"PLUGIN_DESTINATION_REGISTRY"`
-	DestinationUsername  string `envconfig:"PLUGIN_DESTINATION_USERNAME"`
-	DestinationPassword  string `envconfig:"PLUGIN_DESTINATION_PASSWORD"`
-	DestinationNamespace string `envconfig:"PLUGIN_DESTINATION_NAMESPACE"`
-
-	ImageName string `envconfig:"PLUGIN_IMAGE_NAME"`
-	ImageTag  string `envconfig:"PLUGIN_IMAGE_TAG"`
-
-	AccessKeyID     string `envconfig:"PLUGIN_AWS_ACCESS_KEY_ID"`
-	SecretAccessKey string `envconfig:"PLUGIN_AWS_SECRET_ACCESS_KEY"`
-	Region          string `envconfig:"PLUGIN_AWS_REGION"`
+	// Optional
+	SourceUsername    string `envconfig:"PLUGIN_SOURCE_USERNAME"`
+	SourcePassword    string `envconfig:"PLUGIN_SOURCE_PASSWORD"`
+	Overwrite         bool   `envconfig:"PLUGIN_OVERWRITE"`
+	AwsAccessKeyID    string `envconfig:"PLUGIN_AWS_ACCESS_KEY_ID"`
+	AwsSecretAcessKey string `envconfig:"PLUGIN_AWS_SECRET_ACCESS_KEY"`
+	AwsRegion         string `envconfig:"PLUGIN_AWS_REGION"`
 }
 
 // Exec executes the plugin.
 func Exec(ctx context.Context, args Args) error {
 
-	if err := ValidateArgs(args); err != nil {
+	err := validateArgs(&args)
+	if err != nil {
 		return err
 	}
 
-	if err := LoginToRegistry(
-		args.SourceUsername,
-		args.SourcePassword,
-		args.SourceRegistry,
-	); err != nil {
-		return err
-	}
-
-	if args.DestinationUsername == "AWS" && args.DestinationPassword == "" {
-		if args.AccessKeyID == "" || args.SecretAccessKey == "" || args.Region == "" {
-			return fmt.Errorf("AWS credentials are not set")
-		}
-
-		var err error
-
-		args.DestinationPassword, err = GetAWSPassword(
-			args.AccessKeyID,
-			args.SecretAccessKey,
-			args.Region,
-		)
-
+	if args.Username == "AWS" && args.Password == "" {
+		args.Password, err = getAWSPassword(args.AwsAccessKeyID, args.AwsSecretAcessKey, args.AwsRegion)
 		if err != nil {
-			return fmt.Errorf("error getting AWS credentials: %s", err)
+			return err
 		}
 	}
 
-	if err := LoginToRegistry(
-		args.DestinationUsername,
-		args.DestinationPassword,
-		args.DestinationRegistry,
-	); err != nil {
-		return fmt.Errorf("error logging in to destination registry: %s", err)
+	if args.SourceUsername == "AWS" && args.SourcePassword == "" {
+		args.SourcePassword, err = getAWSPassword(args.AwsAccessKeyID, args.AwsSecretAcessKey, args.AwsRegion)
+		if err != nil {
+			return err
+		}
 	}
 
-	sourceImage := fmt.Sprintf("docker://%s/%s/%s:%s", args.SourceRegistry, args.SourceNamespace, args.ImageName, args.ImageTag)
-	destinationImage := fmt.Sprintf("docker://%s/%s", args.DestinationRegistry, args.DestinationNamespace)
-
-	if err := CopyImage(sourceImage, destinationImage); err != nil {
-		return fmt.Errorf("error copying image: %s", err)
-	}
-
-	fmt.Println("Image copied successfully")
-
-	return nil
-}
-
-// ValidateArgs validates the plugin arguments.
-func ValidateArgs(args Args) error {
-	if args.SourceRegistry == "" {
-		return fmt.Errorf("source registry is not set")
-	}
-	if args.SourceUsername == "" {
-		return fmt.Errorf("source username is not set")
-	}
-	if args.SourcePassword == "" {
-		return fmt.Errorf("source password is not set")
-	}
-	if args.SourceNamespace == "" {
-		return fmt.Errorf("source namespace is not set")
-	}
-	if args.DestinationRegistry == "" {
-		return fmt.Errorf("destination registry is not set")
-	}
-	if args.DestinationUsername == "" {
-		return fmt.Errorf("destination username is not set")
-	}
-	if args.DestinationNamespace == "" {
-		return fmt.Errorf("destination namespace is not set")
-	}
-	if args.ImageName == "" {
-		return fmt.Errorf("image name is not set")
-	}
-	if args.ImageTag == "" {
-		return fmt.Errorf("image tag is not set")
-	}
-	return nil
-}
-
-func LoginToRegistry(username, password, regsitry string) error {
-	cmd := exec.Command("skopeo", "login", "--username", username, "--password", password, regsitry)
-	if err := cmd.Run(); err != nil {
+	err = migrateImage(&args)
+	if err != nil {
 		return err
 	}
+
+	logrus.Infof("successfully migrated image %s to %s", args.Source, args.Destination)
+
 	return nil
 }
 
-func GetAWSPassword(accessKeyID, secretAccessKey, region string) (string, error) {
-	// Initialize a session
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(region),
-		Credentials: credentials.NewStaticCredentialsFromCreds(credentials.Value{
-			AccessKeyID:     accessKeyID,
-			SecretAccessKey: secretAccessKey,
-		}),
+func validateArgs(args *Args) error {
+	if args.Username == "" {
+		return fmt.Errorf("missing username")
+	}
+	if args.Password == "" && args.Username != "AWS" {
+		return fmt.Errorf("missing password")
+	}
+	if args.Source == "" {
+		return fmt.Errorf("missing source")
+	}
+	if args.Destination == "" {
+		return fmt.Errorf("missing destination")
+	}
+	return nil
+}
+
+func migrateImage(args *Args) error {
+	var sourceAuth, destAuth authn.Authenticator
+
+	if args.SourceUsername != "" && args.SourcePassword != "" {
+		sourceAuth = authn.FromConfig(authn.AuthConfig{
+			Username: args.SourceUsername,
+			Password: args.SourcePassword,
+		})
+	} else {
+		sourceAuth = authn.FromConfig(authn.AuthConfig{
+			Username: args.Username,
+			Password: args.Password,
+		})
+	}
+
+	destAuth = authn.FromConfig(authn.AuthConfig{
+		Username: args.Username,
+		Password: args.Password,
 	})
 
-	if err != nil {
-		fmt.Println("Error creating session:", err)
-		return "", err
-	}
-
-	// Create an ECR client
-	svc := ecr.New(sess)
-
-	// Get the authorization token
-	input := &ecr.GetAuthorizationTokenInput{}
-	result, err := svc.GetAuthorizationToken(input)
-	if err != nil {
-		fmt.Println("Error getting authorization token:", err)
-		return "", err
-	}
-
-	var awsToken string
-
-	for _, data := range result.AuthorizationData {
-		token, err := base64.StdEncoding.DecodeString(*data.AuthorizationToken)
-		if err != nil {
-			fmt.Println("Error decoding token:", err)
-			return "", err
+	if !args.Overwrite {
+		_, err := crane.Head(args.Destination, crane.WithAuth(destAuth))
+		if err == nil {
+			return fmt.Errorf("image already exists in destination registry and overwrite is not enabled")
 		}
-
-		awsToken = string(token)
 	}
 
-	return strings.Split(awsToken, ":")[1], nil
-}
-
-func CopyImage(source, destination string) error {
-	cmd := exec.Command("skopeo", "copy", source, destination)
-	if err := cmd.Run(); err != nil {
-		return err
+	originImage, err := crane.Pull(args.Source, crane.WithAuth(sourceAuth), crane.Insecure)
+	if err != nil {
+		return fmt.Errorf("failed to pull image %s: %w", args.Source, err)
 	}
+
+	err = crane.Push(originImage, args.Destination, crane.WithAuth(destAuth), crane.WithNoClobber(!args.Overwrite))
+	if err != nil {
+		return fmt.Errorf("failed to push image %s: %w", args.Destination, err)
+	}
+
 	return nil
 }

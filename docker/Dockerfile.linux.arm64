@@ -1,9 +1,13 @@
-FROM alpine:latest
+FROM alpine:latest as builder
+
+RUN apk --no-cache add ca-certificates
+
+FROM scratch
+
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 ENV GODEBUG netdns=go
-# Install Skopeo
-RUN apk --no-cache add ca-certificates curl && \
-    apk add --no-cache skopeo
 
 ADD release/linux/arm64/drone-migrate /bin/
+
 ENTRYPOINT ["/bin/drone-migrate"]
