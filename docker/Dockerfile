@@ -8,6 +8,6 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 ENV GODEBUG netdns=go
 
-ADD release/linux/arm64/drone-migrate /bin/
+ADD release/linux/amd64/drone-migrate /bin/
 
 ENTRYPOINT ["/bin/drone-migrate"]

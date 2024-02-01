@@ -1,7 +1,8 @@
-# drone-docker-image-migration
+# drone-image-migration
 
 - [Synopsis](#Synopsis)
 - [Parameters](#Paramaters)
+- [Notes](#Notes)
 - [Plugin Image](#Plugin-Image)
 - [Examples](#Examples)
 
@@ -13,28 +14,34 @@ To learn how to utilize Drone plugins in Harness CI, please consult the provided
 
 ## Parameters
 
-| Parameter                                                                                                                                 | Choices/<span style="color:blue;">Defaults</span>  | Comments                                                                 |
-| :---------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------- | :----------------------------------------------------------------------- |
-| source_docker_registry <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>      |                                                    | The source docker registry                                               |
-| source_username <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>             |                                                    | Username to login to the source registry                                 |
-| source_password <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>             |                                                    | PAT / access token to authenticate with the source registry              |
-| destination_docker_registry <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span> |                                                    | The destination docker registry                                          |
-| destination_username <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>        |                                                    | Username to login to the destination registry                            |
-| destination_password <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>        |                                                    | PAT / access token to authenticate with the destination registry         |
-| source_namespace <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>            |                                                    | Source namespace to pull the image from                                  |
-| destination_namespace <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>       |                                                    | Destination namespace to push the image to                               |
-| image_name <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>                  |                                                    | The docker image name to be migrated from source to destination registry |
-| image_tag <span style="font-size: 10px"><br/>`string`</span>                                                                              | Default: <span style="color:blue;">`latest`</span> | The docker image tag to be migrated from source to destination registry  |
+| Parameter                                                                                                                 | Choices/<span style="color:blue;">Defaults</span> | Comments                                                         |     |
+| :------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------ | :--------------------------------------------------------------- | --- |
+| source <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>      |                                                   | The source image to be copied                                    |     |
+| username <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>    |                                                   | Username to login to the destination registry                    |     |
+| password <span style="font-size: 10px"><br/>`string`</span>                                                               |                                                   | PAT / access token to authenticate with the destination registry |     |
+| destination <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span> |                                                   | The destination where image will be copied                       |     |
+| source_username <span style="font-size: 10px"><br/>`string`</span>                                                        |                                                   | Username to login to the source registry                         |     |
+| source_password <span style="font-size: 10px"><br/>`string`</span>                                                        |                                                   | PAT / access token to authenticate with the source registry      |     |
+| aws_access_key_id <span style="font-size: 10px"><br/>`string`</span>                                                      |                                                   | AWS access key ID for generating access token                    |     |
+| aws_secret_access_key <span style="font-size: 10px"><br/>`string`</span>                                                  |                                                   | AWS secret access key for generating access token                |     |
+| aws_region <span style="font-size: 10px"><br/>`string`</span>                                                             |                                                   | AWS region containing the ECR registry                           |     |
+| overwrite <span style="font-size: 10px"><br/>`boolean`</span>                                                             | Default: `false`                                  | Overwrite the existing image at destination, if present          |     |
+| insecure <span style="font-size: 10px"><br/>`boolean`</span>                                                              | Default: `false`                                  | Disable TLS                                                      |     |
+
+## Notes
+
+While using AWS ECR as destination registy, set `destination_username` as `AWS`, and either provide the AWS access token as `destination_password`, or provide the `aws_access_key_id`, `aws_secret_access_key` and `aws_region`.
 
 ## Plugin Image
 
-The plugin `harnesscommunity/drone-docker-image-migration` is available for the following architectures:
+The plugin `plugins/image-migration` is available for the following architectures:
 
-| OS            | Tag             |
-| ------------- | --------------- |
-| linux/amd64   | `linux-amd64`   |
-| linux/arm64   | `linux-arm64`   |
-| windows/amd64 | `windows-amd64` |
+| OS          | Tag                          |
+| ----------- | ---------------------------- |
+| latest      | `linux-amd64/arm64, windows` |
+| linux/amd64 | `linux-amd64`                |
+| linux/arm64 | `linux-arm64`                |
+| windows     | `windows-amd64`              |
 
 ## Examples
 
@@ -45,19 +52,44 @@ The plugin `harnesscommunity/drone-docker-image-migration` is available for the 
     name: Migration Plugin
     identifier: Migration_Plugin
     spec:
-        connectorRef: harness-connector
-        image: harnesscommunity/drone-docker-image-migration:linux-amd64
+        connectorRef: my-docker-connector
+        image: plugins/image-migration
         settings:
-                source_docker_registry: registry.hub.docker.com
-                source_username: <+variable.source_username>
-                source_password: <+secrets.getValue("source_pat")>
-                image_name: image_name
-                image_tag: latest
-                destination_docker_registry: registry.hub.docker.com
-                destination_username: <+variable.destnation_username>
-                destination_password: <+secrets.getValue("destination_pat")>
-                source_namespace: <+variable.source_namespace>
-                destination_namespace: <+variable.destination_namespace>
+                source: footloose/gitness:1.2.3
+                destination: tremors/gitness:1.2.3
+                username: kevinbacon
+                password: <+secrets.getValue("docker_pat")>
+
+- step:
+    type: Plugin
+    name: Migration Plugin
+    identifier: Migration_Plugin
+    spec:
+        connectorRef: my-docker-connector
+        image: plugins/image-migration
+        settings:
+                source: aws_account_id.dkr.ecr.us-west-2.amazonaws.com/gitness-dev:1.2.3
+                destination: aws_account_id.dkr.ecr.us-west-2.amazonaws.com/gitness-prod:1.2.3
+                username: AWS
+                aws_access_key_id: "012345678901"
+                aws_secret_access_key: <+secrets.getValue("aws_secret_access_key")>
+                aws_region: us-west-2
+
+- step:
+    type: Plugin
+    name: Migration Plugin
+    identifier: Migration_Plugin
+    spec:
+        connectorRef: my-docker-connector
+        image: plugins/image-migration
+        settings:
+                source: registry-1.example.com/gitness:1.2.3
+                destination: registry-2.example.com/gitness:1.2.3
+                source_username: finncarter
+                source_password: <+secrets.getValue("source_docker_pat")>
+                username: kevinbacon
+                password: <+secrets.getValue("docker_pat")>
+                overwrite: true
 
 ```
 
