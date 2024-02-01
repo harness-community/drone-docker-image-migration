@@ -1,4 +1,4 @@
-# drone-docker-image-migration
+# drone-image-migration
 
 - [Synopsis](#Synopsis)
 - [Parameters](#Paramaters)
@@ -33,7 +33,7 @@ While using AWS ECR as destination registy, set `destination_username` as `AWS`,
 
 ## Plugin Image
 
-The plugin `harnesscommunity/drone-docker-image-migration` is available for the following architectures:
+The plugin `plugins/image-migration` is available for the following architectures:
 
 | OS          | Tag                          |
 | ----------- | ---------------------------- |
@@ -52,7 +52,7 @@ The plugin `harnesscommunity/drone-docker-image-migration` is available for the 
     identifier: Migration_Plugin
     spec:
         connectorRef: my-docker-connector
-        image: plugin/docker-migrate     # is this the name we're using?
+        image: plugins/image-migration
         settings:
                 source: footloose/gitness:1.2.3
                 destination: tremors/gitness:1.2.3
@@ -65,7 +65,7 @@ The plugin `harnesscommunity/drone-docker-image-migration` is available for the 
     identifier: Migration_Plugin
     spec:
         connectorRef: my-docker-connector
-        image: plugin/docker-migrate     # is this the name we're using?
+        image: plugins/image-migration
         settings:
                 source: aws_account_id.dkr.ecr.us-west-2.amazonaws.com/gitness-dev:1.2.3
                 destination: aws_account_id.dkr.ecr.us-west-2.amazonaws.com/gitness-prod:1.2.3
@@ -80,7 +80,7 @@ The plugin `harnesscommunity/drone-docker-image-migration` is available for the 
     identifier: Migration_Plugin
     spec:
         connectorRef: my-docker-connector
-        image: plugin/docker-migrate     # is this the name we're using?
+        image: plugins/image-migration
         settings:
                 source: registry-1.example.com/gitness:1.2.3
                 destination: registry-2.example.com/gitness:1.2.3
