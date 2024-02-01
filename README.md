@@ -25,7 +25,8 @@ To learn how to utilize Drone plugins in Harness CI, please consult the provided
 | aws_access_key_id <span style="font-size: 10px"><br/>`string`</span>                                                      |                                                   | AWS access key ID for generating access token                    |     |
 | aws_secret_access_key <span style="font-size: 10px"><br/>`string`</span>                                                  |                                                   | AWS secret access key for generating access token                |     |
 | aws_region <span style="font-size: 10px"><br/>`string`</span>                                                             |                                                   | AWS region containing the ECR registry                           |     |
-| overwrite <span style="font-size: 10px"><br/>`boolean`</span>                                                             |                                                   | Overwrite the existing image at destination, if present          |     |
+| overwrite <span style="font-size: 10px"><br/>`boolean`</span>                                                             | Default: `false`                                  | Overwrite the existing image at destination, if present          |     |
+| insecure <span style="font-size: 10px"><br/>`boolean`</span>                                                              | Default: `false`                                  | Disable TLS                                                      |     |
 
 ## Notes
 

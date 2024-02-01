@@ -32,6 +32,7 @@ type Args struct {
 	AwsAccessKeyID    string `envconfig:"PLUGIN_AWS_ACCESS_KEY_ID"`
 	AwsSecretAcessKey string `envconfig:"PLUGIN_AWS_SECRET_ACCESS_KEY"`
 	AwsRegion         string `envconfig:"PLUGIN_AWS_REGION"`
+	Insecure          bool   `envconfig:"PLUGIN_INSECURE"`
 }
 
 // Exec executes the plugin.
@@ -102,21 +103,31 @@ func migrateImage(args *Args) error {
 	})
 
 	if !args.Overwrite {
-		_, err := crane.Head(args.Destination, crane.WithAuth(destAuth))
+		headOptions := appendInsecure([]crane.Option{crane.WithAuth(destAuth)}, args.Insecure)
+		_, err := crane.Head(args.Destination, headOptions...)
 		if err == nil {
 			return fmt.Errorf("image already exists in destination registry and overwrite is not enabled")
 		}
 	}
 
-	originImage, err := crane.Pull(args.Source, crane.WithAuth(sourceAuth), crane.Insecure)
+	pullOptions := appendInsecure([]crane.Option{crane.WithAuth(sourceAuth)}, args.Insecure)
+	originImage, err := crane.Pull(args.Source, pullOptions...)
 	if err != nil {
 		return fmt.Errorf("failed to pull image %s: %w", args.Source, err)
 	}
 
-	err = crane.Push(originImage, args.Destination, crane.WithAuth(destAuth), crane.WithNoClobber(!args.Overwrite))
+	pushOptions := appendInsecure([]crane.Option{crane.WithAuth(destAuth)}, args.Insecure)
+	err = crane.Push(originImage, args.Destination, pushOptions...)
 	if err != nil {
 		return fmt.Errorf("failed to push image %s: %w", args.Destination, err)
 	}
 
 	return nil
+}
+
+func appendInsecure(options []crane.Option, insecure bool) []crane.Option {
+	if insecure {
+		return append(options, crane.Insecure)
+	}
+	return options
 }
