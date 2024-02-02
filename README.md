@@ -32,6 +32,8 @@ To learn how to utilize Drone plugins in Harness CI, please consult the provided
 
 While using AWS ECR as destination registy, set `destination_username` as `AWS`, and either provide the AWS access token as `destination_password`, or provide the `aws_access_key_id`, `aws_secret_access_key` and `aws_region`.
 
+While using Google Artifact Registry, use `oauth2accesstoken` as the relevant username and access-token as the password.
+
 ## Plugin Image
 
 The plugin `plugins/image-migration` is available for the following architectures:
@@ -89,6 +91,22 @@ The plugin `plugins/image-migration` is available for the following architecture
                 source_password: <+secrets.getValue("source_docker_pat")>
                 username: kevinbacon
                 password: <+secrets.getValue("docker_pat")>
+                overwrite: true
+
+- step:
+    type: Plugin
+    name: Migration Plugin
+    identifier: Migration_Plugin
+    spec:
+        connectorRef: my-docker-connector
+        image: plugins/image-migration
+        settings:
+                source: registry-1.example.com/gitness:1.2.3
+                destination: LOCATION-docker.pkg.dev/PROJECT-ID/REPO-NAME/IMAGE-NAME
+                source_username: finncarter
+                source_password: <+secrets.getValue("source_docker_pat")>
+                username: oauth2accesstoken
+                password: <+secrets.getValue("gcr_pat")>
                 overwrite: true
 
 ```
