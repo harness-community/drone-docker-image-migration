@@ -14,23 +14,28 @@ To learn how to utilize Drone plugins in Harness CI, please consult the provided
 
 ## Parameters
 
-| Parameter                                                                                                                 | Choices/<span style="color:blue;">Defaults</span> | Comments                                                         |     |
-| :------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------ | :--------------------------------------------------------------- | --- |
-| source <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>      |                                                   | The source image to be copied                                    |     |
-| username <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>    |                                                   | Username to login to the destination registry                    |     |
-| password <span style="font-size: 10px"><br/>`string`</span>                                                               |                                                   | PAT / access token to authenticate with the destination registry |     |
-| destination <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span> |                                                   | The destination where image will be copied                       |     |
-| source_username <span style="font-size: 10px"><br/>`string`</span>                                                        |                                                   | Username to login to the source registry                         |     |
-| source_password <span style="font-size: 10px"><br/>`string`</span>                                                        |                                                   | PAT / access token to authenticate with the source registry      |     |
-| aws_access_key_id <span style="font-size: 10px"><br/>`string`</span>                                                      |                                                   | AWS access key ID for generating access token                    |     |
-| aws_secret_access_key <span style="font-size: 10px"><br/>`string`</span>                                                  |                                                   | AWS secret access key for generating access token                |     |
-| aws_region <span style="font-size: 10px"><br/>`string`</span>                                                             |                                                   | AWS region containing the ECR registry                           |     |
-| overwrite <span style="font-size: 10px"><br/>`boolean`</span>                                                             | Default: `false`                                  | Overwrite the existing image at destination, if present          |     |
-| insecure <span style="font-size: 10px"><br/>`boolean`</span>                                                              | Default: `false`                                  | Disable TLS                                                      |     |
+| Parameter                                                                                                                 | Choices/<span style="color:blue;">Defaults</span> | Comments                                                         |
+| :------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------ | :--------------------------------------------------------------- |
+| source <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>      |                                                   | The source image to be copied                                    |
+| username <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span>    |                                                   | Username to login to the destination registry                    |
+| password <span style="font-size: 10px"><br/>`string`</span>                                                               |                                                   | PAT / access token to authenticate with the destination registry |
+| destination <span style="font-size: 10px"><br/>`string`</span> <span style="color:red; font-size: 10px">`required`</span> |                                                   | The destination where image will be copied                       |
+| source_username <span style="font-size: 10px"><br/>`string`</span>                                                        |                                                   | Username to login to the source registry                         |
+| source_password <span style="font-size: 10px"><br/>`string`</span>                                                        |                                                   | PAT / access token to authenticate with the source registry      |
+| aws_access_key_id <span style="font-size: 10px"><br/>`string`</span>                                                      |                                                   | AWS access key ID for generating access token                    |
+| aws_secret_access_key <span style="font-size: 10px"><br/>`string`</span>                                                  |                                                   | AWS secret access key for generating access token                |
+| aws_region <span style="font-size: 10px"><br/>`string`</span>                                                             |                                                   | AWS region containing the ECR registry                           |
+| source_aws_access_key_id <span style="font-size: 10px"><br/>`string`</span>                                               |                                                   | Source AWS access key ID for generating access token             |
+| source_aws_secret_access_key <span style="font-size: 10px"><br/>`string`</span>                                           |                                                   | Source AWS secret access key for generating access token         |
+| source_aws_region <span style="font-size: 10px"><br/>`string`</span>                                                      |                                                   | Source AWS region containing the ECR registry                    |
+| overwrite <span style="font-size: 10px"><br/>`boolean`</span>                                                             | Default: `false`                                  | Overwrite the existing image at destination, if present          |
+| insecure <span style="font-size: 10px"><br/>`boolean`</span>                                                              | Default: `false`                                  | Disable TLS                                                      |
 
 ## Notes
 
-While using AWS ECR as destination registy, set `destination_username` as `AWS`, and either provide the AWS access token as `destination_password`, or provide the `aws_access_key_id`, `aws_secret_access_key` and `aws_region`.
+While using AWS ECR as destination registy, set `username` as `AWS`, and either provide the AWS access token as `password`, or provide the `aws_access_key_id`, `aws_secret_access_key` and `aws_region`.
+
+While migrating from one AWS ECR to another AWS ECR (separate accounts), set `username` and `source_username` as AWS, and either provide the AWS access tokens as `password` and `source_password`, or provide the `source_aws_access_key_id`, `source_aws_secret_access_key` and `source_aws_region` separately.
 
 While using Google Artifact Registry, use `oauth2accesstoken` as the relevant username and access-token as the password.
 
@@ -75,6 +80,25 @@ The plugin `plugins/image-migration` is available for the following architecture
                 username: AWS
                 aws_access_key_id: "012345678901"
                 aws_secret_access_key: <+secrets.getValue("aws_secret_access_key")>
+                aws_region: us-west-2
+
+- step:
+    type: Plugin
+    name: Migration Plugin
+    identifier: Migration_Plugin
+    spec:
+        connectorRef: my-docker-connector
+        image: plugins/image-migration
+        settings:
+                source: aws_account_id.dkr.ecr.us-west-2.amazonaws.com/gitness-dev:1.2.3
+                destination: aws_account_id_2.dkr.ecr.us-west-2.amazonaws.com/gitness-prod:1.2.3
+                username: AWS
+                aws_access_key_id: "012345678901"
+                aws_secret_access_key: <+secrets.getValue("aws_secret_access_key")>
+                aws_region: us-west-2
+                source_username: AWS
+                source_aws_access_key_id: "190219201220"
+                source_aws_secret_access_key: <+secrets.getValue("source_aws_secret_access_key")>
                 aws_region: us-west-2
 
 - step:
