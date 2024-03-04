@@ -33,6 +33,10 @@ type Args struct {
 	AwsSecretAcessKey string `envconfig:"PLUGIN_AWS_SECRET_ACCESS_KEY"`
 	AwsRegion         string `envconfig:"PLUGIN_AWS_REGION"`
 	Insecure          bool   `envconfig:"PLUGIN_INSECURE"`
+
+	SourceAWSAccessKeyID    string `envconfig:"PLUGIN_SOURCE_AWS_ACCESS_KEY_ID"`
+	SourceAWSSecretAcessKey string `envconfig:"PLUGIN_SOURCE_AWS_SECRET_ACCESS_KEY"`
+	SourceAWSRegion         string `envconfig:"PLUGIN_SOURCE_AWS_REGION"`
 }
 
 // Exec executes the plugin.
@@ -50,7 +54,7 @@ func Exec(ctx context.Context, args Args) error {
 	}
 
 	if args.SourceUsername == "AWS" && args.SourcePassword == "" {
-		args.SourcePassword, err = getAWSPassword(args.AwsAccessKeyID, args.AwsSecretAcessKey, args.AwsRegion)
+		args.SourcePassword, err = getAWSPassword(args.SourceAWSAccessKeyID, args.SourceAWSSecretAcessKey, args.SourceAWSRegion)
 		if err != nil {
 			return err
 		}
