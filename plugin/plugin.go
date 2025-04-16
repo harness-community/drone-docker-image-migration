@@ -26,6 +26,7 @@ type Args struct {
 	Destination string `envconfig:"PLUGIN_DESTINATION"`
 
 	// Optional
+	SourceAnonymous   bool `envconfig:"PLUGIN_SOURCE_IS_PUBLIC"`
 	SourceUsername    string `envconfig:"PLUGIN_SOURCE_USERNAME"`
 	SourcePassword    string `envconfig:"PLUGIN_SOURCE_PASSWORD"`
 	Overwrite         bool   `envconfig:"PLUGIN_OVERWRITE"`
@@ -94,7 +95,7 @@ func migrateImage(args *Args) error {
 			Username: args.SourceUsername,
 			Password: args.SourcePassword,
 		})
-	} else {
+	} else if !args.SourceAnonymous{
 		sourceAuth = authn.FromConfig(authn.AuthConfig{
 			Username: args.Username,
 			Password: args.Password,
