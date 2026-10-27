@@ -15,4 +15,4 @@ GOOS=linux GOARCH=amd64 go build -o release/linux/amd64/drone-migrate
 GOOS=linux GOARCH=arm64 go build -o release/linux/arm64/drone-migrate
 
 # windows
-GOOS=windows GOARCH=amd64 go build -o release/windows/amd64/drone-migrate.exe
+GOOS=windows go build -o release/windows/amd64/drone-migrate.exe
