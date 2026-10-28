@@ -1,6 +1,6 @@
 module github.com/harness-community/drone-docker-image-migration
 
-go 1.25.11
+go 1.26.10
 
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.26.6
